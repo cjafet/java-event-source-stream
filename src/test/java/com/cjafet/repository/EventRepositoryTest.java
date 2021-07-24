@@ -11,6 +11,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @SpringBootTest
 public class EventRepositoryTest {
@@ -45,6 +48,22 @@ public class EventRepositoryTest {
         eventRepository.removeAll(DRILLING);
         eventRepository.removeAll(DISTILLATION);
     }
+
+    @Test
+    public void testWithConcurrency() throws InterruptedException {
+        int numberOfThreads = 100000;
+        ExecutorService service = Executors.newFixedThreadPool(10);
+        CountDownLatch latch = new CountDownLatch(numberOfThreads);
+        for (int i = 0; i < numberOfThreads; i++) {
+            service.execute(() -> {
+                eventRepository.insert(new Event(DRILLING, getTimestamp()));
+                latch.countDown();
+            });
+        }
+        latch.await();
+        Assertions.assertEquals(numberOfThreads, eventRepository.queryAll().size());
+    }
+
 
     @Test
     public void testInsert() {

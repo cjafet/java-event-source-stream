@@ -13,7 +13,7 @@ public class EventRepository implements EventStore {
     private List<Event> store = new ArrayList<>();
 
     @Override
-    public void insert(Event event) {
+    public synchronized void insert(Event event) {
 //        store.put(LocalDateTime.now().toString(), event);
         store.add(event);
     }
